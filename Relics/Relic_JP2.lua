@@ -104,22 +104,6 @@ Holo.Relic_Joker{ -- Murasaki Shion
     pos = { x = 1, y = 0 },
     soul_pos = { x = 1, y = 1 },
 
-    add_to_deck = function(self, card, from_debuff)
-        for k,v in pairs(G.playing_cards)do
-            if SMODS.has_enhancement(v,'m_lucky') and v:get_id()==14 then
-                v.ability.config.mult_odds = card.ability.extra.mult_odds
-                v.ability.config.p_dollars_odds = card.ability.extra.p_dollars_odds
-            end
-        end
-    end,
-    remove_from_deck = function(self, card, from_debuff)
-        for k,v in pairs(G.playing_cards)do
-            if SMODS.has_enhancement(v,'m_lucky') then
-                v.ability.config.mult_odds = 5
-                v.ability.config.p_dollars_odds = 15
-            end
-        end
-    end,
     upgrade = function(self, card)
         card:juice_up()
         card.ability.extra.Xmult = card.ability.extra.Xmult + card.ability.extra.Xmult_mod
@@ -133,17 +117,6 @@ Holo.Relic_Joker{ -- Murasaki Shion
         elseif context.joker_main then
             card:juice_up()
             return {Xmult=card.ability.extra.Xmult}
-        end
-        for k,v in pairs(G.playing_cards)do
-            if SMODS.has_enhancement(v,'m_lucky') then
-                if v:get_id()==14 then
-                    v.ability.config.mult_odds = card.ability.extra.mult_odds
-                    v.ability.config.p_dollars_odds = card.ability.extra.p_dollars_odds
-                else
-                    v.ability.config.mult_odds = 5
-                    v.ability.config.p_dollars_odds = 15
-                end
-            end
         end
     end
 }
@@ -319,7 +292,7 @@ Holo.Relic_Joker{ -- Oozora Subaru
     loc_txt = {
         name = "Whistle of the Duck Officer",
         text = {
-            'Played card that didn\'t score will be {C:attention}arrested{}.',
+            'Played card that did not score will be {C:attention}arrested{}.',
             'Playing cards {C:red}go to jail{} on their {C:attention}third{} arrest.',
             'Gain {X:mult,C:white}X#2#{} mult if {C:attention}no card{} is arrested',
             'in current played hand. {C:inactive}(Currently {X:mult,C:white}X#1#{C:inactive} Mult)'
@@ -356,16 +329,9 @@ Holo.Relic_Joker{ -- Oozora Subaru
     calculate = function(self, card, context)
         if context.after then
             if #context.full_hand > #context.scoring_hand then
-                local is_scoring_card
+                local removed_cards = {}
                 for _,played_card in ipairs(context.full_hand)do
-                    is_scoring_card = false
-                    for _,scoring_card in ipairs(context.scoring_hand)do
-                        if played_card == scoring_card then
-                            is_scoring_card = true
-                            break
-                        end
-                    end
-                    if not is_scoring_card then
+                    if not SMODS.in_scoring(played_card, context.scoring_hand) then
                         if played_card.ability.arrested == nil then
                             played_card:add_sticker('hololive_handcuff')
                             played_card.ability.arrested = 1
@@ -374,11 +340,12 @@ Holo.Relic_Joker{ -- Oozora Subaru
                         elseif played_card.ability.arrested == 2 then
                             played_card:juice_up()
                             played_card:start_dissolve(nil, true)
-                            for _,J in ipairs(G.jokers.cards) do
-                                eval_card(J, {cardarea = G.jokers, remove_playing_cards = true, removed = {played_card,}})
-                            end
+                            removed_cards[#removed_cards+1] = played_card
                         end
                     end
+                end
+                for _,J in ipairs(G.jokers.cards) do
+                    eval_card(J, {cardarea = G.jokers, remove_playing_cards = true, removed = removed_cards})
                 end
             else
                 self:upgrade(card)
