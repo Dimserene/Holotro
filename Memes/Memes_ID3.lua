@@ -35,23 +35,20 @@ SMODS.Joker{
         }
     },
     config = { extra = { vol = 1, vol_mod = 0.01 } },
+    loc_vars = function(self, info_queue, card)
+        return { vars = {} }
+    end,
+
     rarity = 1,
     cost = 0,
     blueprint_compat = true,
     atlas = 'Kaela_Doot',
     pos = { x = 0, y = 0 },
-    loc_vars = function(self, info_queue, card)
-        return { vars = {} }
-    end,
+
     calculate = function(self, card, context)
         if context.individual and context.cardarea == G.play then
             if not context.blueprint then
-                G.E_MANAGER:add_event(Event({
-                    func = function()
-                        card.ability.extra.vol = card.ability.extra.vol + card.ability.extra.vol_mod
-                        return true
-                    end
-                }))
+                card.ability.extra.vol = card.ability.extra.vol + card.ability.extra.vol_mod
             end
             return {
                 message='Doot!',
@@ -73,14 +70,6 @@ function Card:hover()
         play_sound('hololive_Kaela_Doot')
     end
     card_hover(self)
-end
-
-local doot_play_sound = play_sound
-function play_sound(sound_code, per, vol)
-    if sound_code~='hololive_Kaela_Doot' and next(find_joker('j_hololive_Meme_Kaela_DOOT')) then
-        doot_play_sound('hololive_Kaela_Doot', per, vol)
-    end
-    doot_play_sound(sound_code, per, vol)
 end
 
 ----
