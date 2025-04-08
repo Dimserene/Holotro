@@ -44,8 +44,7 @@ function holo_ctx(context)
 end
 
 function holo_card_upgrade(card)
-    local cae = ((card or {})['ability'] or {})['extra'] or {}
-    if #cae==0 then return end
+    local cae = ((card or {}).ability or {}).extra or {}
     local args = cae.upgrade_args or {}
     local scale_var = args.scale_var
     if type(scale_var) ~= 'string' then return end
@@ -70,19 +69,19 @@ end
 function holo_card_upgrade_by_consumeable(card, context, consumeable_key)
     if context.blueprint then return end
     if context.using_consumeable ~= true then return end
-    if (((context.consumeable or{})['config']or{})['center']or{}).key ~= consumeable_key then return end
+    if (((context.consumeable or {}).config or {}).center or {}).key ~= consumeable_key then return end
     holo_card_upgrade(card)
 end
 
-function holo_card_counting(card, context, decr, func, elsefunc)
-    if ((card or {})['ability'] or {})['extra'] == nil then return end
-    local cae = card.ability.extra
+function holo_card_counting(card, context, decr)
+    local cae = ((card or {}).ability or {}).extra or {}
+    local args = cae.count_args or {}
     if cae.count_init == nil then return end
     if cae.count_down == nil then return end
 
-    decr = decr or 1
-    func = func or (function(_card,_ctx)end)
-    elsefunc = elsefunc or (function(_card,_ctx)end)
+    decr = decr or args.decr or 1
+    local func = args.func or (function(_card,_ctx)end)
+    local elsefunc = args.elsefunc or (function(_card,_ctx)end)
 
     cae.count_down = cae.count_down - decr
     local _effect = nil

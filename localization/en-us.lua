@@ -82,6 +82,12 @@ local fullname = {
 
 }
 
+local relicgacha_text={
+    "Creates a",
+    "{V:1,E:1}#1# Relic",
+    "{C:inactive}(Must have room)",
+}
+
 return {
     descriptions={
         Other={
@@ -262,13 +268,13 @@ return {
                 }
             },
             holo_info_even={
-                name="Even Cards",
+                name="Even Ranks",
                 text={
                     " 10, 8, 6, 4, 2 ",
                 }
             },
             holo_info_odd={
-                name="Odd Cards",
+                name="Odd Ranks",
                 text={
                     " A, 9, 7, 5, 3 ",
                 }
