@@ -197,7 +197,7 @@ Holo.Relic_Joker{ -- Ceres Fauna
     soul_pos = { x = 2, y = 1 },
 
     calculate = function(self, card, context)
-        if context.before and context.cardarea == G.play then
+        if context.before then
             local house_key = nil
             local house_message = nil
             if context.scoring_name == 'Full House' then
@@ -208,12 +208,18 @@ Holo.Relic_Joker{ -- Ceres Fauna
                 house_message = 'Ceres!'
             end
             if house_key then
-                card:juice_up()
-                card_eval_status_text(card, 'jokers', nil, 1, nil, {message = house_message, colour=HEX('a4e5cf'),instant=true})
-                SMODS.add_card({ key = house_key, area = G.consumeables, edition = 'e_negative' })
+                G.E_MANAGER:add_event(Event({
+                    func = function ()
+                        SMODS.add_card({ key = house_key, area = G.consumeables, edition = 'e_negative' })
+                        return true
+                    end
+                }))
+                return {
+                    message = house_message,
+                    colour=Holo.C.Fauna
+                }
             end
         elseif context.joker_main then
-            card:juice_up()
             return {
                 Xmult = card.ability.extra.Xmult,
                 message='Nature!',
@@ -251,15 +257,15 @@ Holo.Relic_Joker{ -- Ouro Kronii
         upgrade_args = {
             scale_var = 'Xmult',
             message = 'Tock!',
-            func = function(card)
-                if card.ability.extra.upgrade_args.message == 'Tick!' then
-                    card.ability.extra.upgrade_args.message = 'Tock!'
-                elseif card.ability.extra.upgrade_args.message == 'Tock!' then
-                    card.ability.extra.upgrade_args.message = 'Tick!'
-                end
-            end
         }
     }},
+    upgrade_func = function(card)
+        if card.ability.extra.upgrade_args.message == 'Tick!' then
+            card.ability.extra.upgrade_args.message = 'Tock!'
+        elseif card.ability.extra.upgrade_args.message == 'Tock!' then
+            card.ability.extra.upgrade_args.message = 'Tick!'
+        end
+    end,
     loc_vars = function(self, info_queue, card)
         info_queue[#info_queue+1] = G.P_CENTERS.c_world
         return {
@@ -281,7 +287,7 @@ Holo.Relic_Joker{ -- Ouro Kronii
         if ((context.individual and context.cardarea == G.play) or context.discard) and not context.blueprint then
             if not context.other_card.debuff and context.other_card:is_suit("Spades") then
                 cae.count_down = cae.count_down - 1
-                if ce.count_down <= 0 then
+                if cae.count_down <= 0 then
                     cae.count_down = cae.count_down + 12
                     card:juice_up()
                     SMODS.add_card({ key = 'c_world', area = G.consumeables, edition = 'e_negative' })
@@ -344,14 +350,9 @@ Holo.Relic_Joker{ -- Nanashi Mumei
             end
         elseif context.discard then
             if not context.other_card:is_suit("Spades") then
-                if Holo.chance('Mumei', cae.odds) then
-                    context.other_card:juice_up()
-                    context.other_card:start_dissolve(nil, true)
-                    for _,J in ipairs(G.jokers.cards) do
-                        eval_card(J, {cardarea = G.jokers, remove_playing_cards = true, removed = {context.other_card,}})
-                    end
+                if Holo.chance('Mumei', card.ability.extra.odds) then
                     return {
-                        --remove = true,
+                        remove = true,
                         sound='slice1',
                     }
                 end

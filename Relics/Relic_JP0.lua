@@ -43,7 +43,6 @@ Holo.Relic_Joker{ -- Tokino Sora
     calculate = function(self, card, context)
         if context.individual and context.cardarea == G.play then
             if context.other_card:is_suit('Diamonds') and context.other_card:get_id()==context.full_hand[1]:get_id() then
-                card:juice_up()
                 return {
                     Xmult=card.ability.extra.Xmult,
                     colour=Holo.C.Sora
@@ -98,8 +97,7 @@ Holo.Relic_Joker{ -- Roboco
                     _tick = true
                 end
                 if _tick then
-                    card:juice_up()
-                    context.other_card.ability.config.h_x_mult = context.other_card.ability.config.h_x_mult + card.ability.extra.Xmult_mod
+                    context.other_card.ability.h_x_mult = context.other_card.ability.h_x_mult + card.ability.extra.Xmult_mod
                     return {
                         message = localize('k_upgrade_ex'),
                         card = context.other_card
@@ -224,12 +222,12 @@ Holo.Relic_Joker{ -- Sakura Miko
         count_down=35,
         dummy_parameter = 0,
         upgrade_args = {
-            scale_var = 'dummy_parameter',
-            func = function(card)
-                SMODS.add_card({ key = 'c_star', area = G.consumeables, edition = 'e_negative' })
-            end
+            scale_var = 'dummy_parameter'
         }
     }},
+    upgrade_func = function(card)
+        SMODS.add_card({ key = 'c_star', area = G.consumeables, edition = 'e_negative' })
+    end,
     loc_vars = function(self, info_queue, card)
         info_queue[#info_queue+1] = G.P_CENTERS.c_star
         return {

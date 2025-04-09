@@ -50,9 +50,12 @@ Holo.Relic_Joker{ -- Shiori Novella
                 holo_card_upgrade(card)
             end
             if context.other_card:is_face() then
-                context.other_card:juice_up()
-                card_eval_status_text(context.other_card, 'extra', nil, 1, nil, {message="Archived!",colour = HEX('373741')})
-                context.other_card:start_dissolve(nil, true)
+                return {
+                    remove = true,
+                    message="Archived!",
+                    colour = HEX('373741'),
+                    card = context.other_card
+                }
                 -- "No no no, they were not destroyed, silly! I just took them to somewhere else!"
             end
         end
@@ -97,7 +100,7 @@ Holo.Relic_Joker{ -- Koseki Bijou
         holo_card_upgrade_by_consumeable(card, context, 'c_tower')
         if context.individual and context.cardarea == G.play then
             if SMODS.has_enhancement(context.other_card, "m_stone") then
-                context.other_card.ability.config.bonus = context.other_card.ability.config.bonus + card.ability.extra.bonus_mod
+                context.other_card.ability.bonus = context.other_card.ability.bonus + card.ability.extra.bonus_mod
                 SMODS.calculate_effect({message="Biboo!",colour = HEX('6e5bf4')},card)
             end
         end

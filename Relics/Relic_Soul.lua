@@ -41,12 +41,12 @@ Holo.Relic_Gacha = SMODS.Consumable:extend{
 
     in_pool = function(self, args)
         local _tick = 0
-        for _,m in ipairs(self.center.memberlist) do
+        for _,m in ipairs(self.memberlist) do
             if next(find_joker('j_hololive_Relic_'..m))then
                 _tick = _tick + 1
             end
         end
-        if _tick > 0 and ((_tick < #self.center.memberlist) or next(find_joker('Showman'))) then
+        if _tick > 0 and ((_tick < #self.memberlist) or next(find_joker('Showman'))) then
             return true
         else
             return false
@@ -65,14 +65,14 @@ Holo.Relic_Gacha = SMODS.Consumable:extend{
     use = function(self, card, area, copier)
         local _pool = {}
         if next(find_joker('Showman')) then
-            _pool = self.center.memberlist
+            _pool = self.memberlist
         else
-            for _,m in ipairs(self.center.memberlist) do
+            for _,m in ipairs(self.memberlist) do
                 if not next(find_joker('j_hololive_Relic_'..m)) then
                     _pool[#_pool+1] = m
                 end
             end
-            if #_pool == 0 then _pool = self.center.memberlist end
+            if #_pool == 0 then _pool = self.memberlist end
         end
         local _member = pseudorandom_element(_pool, pseudoseed(card.ability.extra.group_name))
         local _key = 'j_hololive_Relic_'.._member
@@ -130,7 +130,7 @@ Holo.Relic_Gacha{ -- Hololive
     }},
     hidden = true,
     soul_set = 'Tarot',
-    soul_rate = 0.02,
+    soul_rate = 0.05,
     can_repeat_soul = false,
 
     atlas = 'RelicGacha_HQ',
@@ -139,7 +139,7 @@ Holo.Relic_Gacha{ -- Hololive
 
     in_pool = function(self, args)
         for _,J in ipairs(G.jokers.cards) do
-            if ((J or {}).mod or {}).id == 'Holotro' then return true end
+            if Holo.mod_check(J) then return true end
         end
     end,
     use = function(self, card, area, copier)
@@ -205,7 +205,7 @@ Holo.Relic_Gacha{ -- Hololive
 
                 -- Suits
                 for suit,counter in pairs(card_stats.suits)do
-                    if c:is_suit(suit) then card_stats.suits[suit] = conter + 1 end
+                    if c:is_suit(suit) then card_stats.suits[suit] = counter + 1 end
                 end
 
                 -- Ranks
@@ -395,7 +395,7 @@ Holo.Relic_Gacha{ -- Hololive
                 Vivi     = false,
             }
             for member,condition in pairs(syn_table)do
-                if contition then _pool[#_pool+1] = member end
+                if condition then _pool[#_pool+1] = member end
             end
 
         elseif pool_mode == 'Genmates' then
@@ -453,7 +453,6 @@ Holo.Relic_Gacha{ -- Hololive
         -- Final step of this whole process.
         local _member
         if pool_mode == 'Birthday' then _member = hbd_member
-        elseif #_pool==1 then _member = _pool[1]
         else _member = pseudorandom_element(_pool, pseudoseed('Hololive'))
         end
         G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.4, func = function()
@@ -508,7 +507,7 @@ Holo.Relic_Gacha{ -- ID -- Indonesia
 Holo.Relic_Gacha{ -- EN -- English
     key = 'RelicGacha_Branch_EN',
     loc_txt = {
-        name = 'The Main',
+        name = 'The Enigma',
         text = relicgacha_text
     },
     config = { extra = {
