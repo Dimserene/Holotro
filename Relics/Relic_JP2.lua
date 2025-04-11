@@ -259,17 +259,16 @@ SMODS.Sticker{ -- Oozora Subaru
             '{C:inactive}by scoring this card.)'
         }
     },
-    loc_vars = function(self, info_queue, card)
-        return {}
-    end,
     atlas='hololive_Sticker_Handcuff',
     pos={x=0,y=0},
     hide_badge=true,
     default_compat=true,
-    sets={
-        Default = true,
-        Enhanced = true,
-    },
+    should_apply = function(self, card, center, area, bypass_roll)
+        if area==G.play then
+            return true
+        end
+        return false
+    end,
 }
 
 Holo.Relic_Joker{ -- Oozora Subaru
@@ -314,15 +313,46 @@ Holo.Relic_Joker{ -- Oozora Subaru
     end,
     calculate = function(self, card, context)
         if context.after then
+            local peace = true
             for _,played_card in ipairs(context.full_hand)do
-                if SMODS.in_scoring(played_card, context.scoring_hand) then
-                    played_card:remove_sticker('hololive_handcuff')
+                local in_scoring = false
+                for _,scoring_card in ipairs(context.scoring_hand)do
+                    if played_card==scoring_card then
+                        in_scoring = true
+                        break
+                    end
+                end
+                local cuffed = (played_card.ability.hololive_handcuff~=nil)
+                if in_scoring then
+                    G.E_MANAGER:add_event(Event({
+                        func = function()
+                            if cuffed then
+                                played_card:juice_up()
+                                played_card:remove_sticker('hololive_handcuff')
+                            end
+                            return true
+                        end
+                    }))
                 else
-                    played_card:add_sticker('hololive_handcuff')
+                    G.E_MANAGER:add_event(Event({
+                        func = function()
+                            if not cuffed then
+                                played_card:juice_up()
+                                played_card:add_sticker('hololive_handcuff')
+                            end
+                            return true
+                        end
+                    }))
+                    peace = false
                 end
             end
-            if #context.full_hand == #context.scoring_hand then
-                holo_card_upgrade(card)
+            if peace then
+                G.E_MANAGER:add_event(Event({
+                    func = function()
+                        holo_card_upgrade(card)
+                        return true
+                    end
+                }))
             end
         elseif context.discard then
             if context.other_card.ability.hololive_handcuff then
