@@ -2,11 +2,12 @@
 function holo_ctx(context)
     -- Main Scoring Loop
     if context.before then return 'before scoring' end
+    if context.repetition and context.cardarea == G.play then return 'retrigger scoring' end
     if context.main_scoring and context.cardarea == G.play then return 'card modifier scoring effect' end
     if context.individual and context.cardarea == G.play then return 'when scored' end
-    if context.repetition and context.cardarea == G.play then return 'retrigger scoring' end
-    if context.individual and context.cardarea == G.hand and not context.end_of_round then return 'held in hand for scoring' end
     if context.repetition and context.cardarea == G.hand and not context.end_of_round then return 'retrigger in hand for scoring' end
+    if context.individual and context.cardarea == G.hand and not context.end_of_round then return 'held in hand for scoring' end
+    if context.pre_joker then return 'pre_joker' end
     if context.joker_main then return 'joker_main' end
     if context.other_joker then return 'other_joker' end
     if context.post_joker then return 'post_joker' end
@@ -19,12 +20,12 @@ function holo_ctx(context)
     if context.discard then return 'when discard' end
     -- End Of Round
     if context.end_of_round and context.cardarea == G.jokers then return 'joker at end of round' end
-    if context.end_of_round and context.individual then return 'held in hand at end of round' end
     if context.end_of_round and context.repetition then return 'retrigger in hand at end of round' end
+    if context.end_of_round and context.individual then return 'held in hand at end of round' end
     -- Blind
-    if context.debuffed_hand then return 'hand debuffed by the blind' end
     if context.setting_blind then return 'select a blind' end
     if context.skip_blind then return 'skip a blind' end
+    if context.debuffed_hand then return 'hand debuffed by the blind' end
     -- Shop
     if context.reroll_shop then return 'shop reroll' end
     if context.buying_card then return 'buy a card' end
@@ -40,6 +41,8 @@ function holo_ctx(context)
     -- Others
     if context.using_consumeable then return 'use a consumeable' end
     if context.playing_card_added then return 'add a playing card' end
+    if context.card_added then return 'add a non-playing card' end
+    if context.check_enhancement then return 'quantum enhancements' end
     if context.post_trigger then return 'post_trigger' end
 end
 
@@ -112,23 +115,19 @@ end
 
 function holo_card_counting(card, context, decr)
     local cae = Holo.cae(card)
-    local args = cae.count_args or {}
-    if cae.count_init == nil then return end
-    if cae.count_down == nil then return end
+    if cae.count_args == nil then return false end
+    local args = cae.count_args
+    if args.init == nil then return false end
+    if args.down == nil then return false end
 
-    decr = decr or args.decr or 1
-    local func = card.config.center.count_func or (function(_card,_ctx)end)
-    local elsefunc = card.config.center.count_elsefunc or (function(_card,_ctx)end)
-
-    cae.count_down = cae.count_down - decr
+    args.down = args.down - (decr or args.decr or 1)
     local _effect = nil
-    if cae.count_down <= 0 then
-        cae.count_down = cae.count_down + cae.count_init
-        _effect = func(card, context)
+    if args.down <= 0 then
+        args.down = args.down + args.init
+        return true
     else
-        _effect = elsefunc(card, context)
+        return false
     end
-    return _effect
 end
 
 function holo_card_expired(card)
@@ -244,4 +243,44 @@ function Holo.hand_contained_usage()
         ret['Pair']=true
     end
     return ret
+end
+
+function Holo.blueprint_node(card)
+    card.ability.blueprint_compat_ui = card.ability.blueprint_compat_ui or ''
+    card.ability.blueprint_compat_check = nil
+    return card.ability.blueprint_compat and {
+        {n=G.UIT.C, config={align = "bm", minh = 0.4}, nodes={
+            {n=G.UIT.C, config={ref_table = card, align = "m", colour = G.C.JOKER_GREY, r = 0.05, padding = 0.06, func = 'blueprint_compat'}, nodes={
+                {n=G.UIT.T, config={ref_table = card.ability, ref_value = 'blueprint_compat_ui',colour = G.C.UI.TEXT_LIGHT, scale = 0.32*0.8}},
+            }}
+        }}
+    } or nil
+end
+
+function Holo.blueprint_update(card, joker_to_copy, extra_criteria)
+    if joker_to_copy==nil then
+        card.ability.blueprint_compat = false
+    elseif Holo.nil_check(joker_to_copy,{'config','center'}).blueprint_compat and extra_criteria then
+        card.ability.blueprint_compat = 'compatible'
+    else
+        card.ability.blueprint_compat = 'incompatible'
+    end
+end
+
+function Holo.add_consumeable(_key, _neg)
+    if (#G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit) or _neg then
+        G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + (_neg and 0 or 1)
+        G.E_MANAGER:add_event(Event({
+            func = function ()
+                SMODS.add_card({
+                    key = _key,
+                    area = G.consumeables,
+                    edition = _neg and 'e_negative' or nil,
+                })
+                G.GAME.consumeable_buffer = G.GAME.consumeable_buffer - (_neg and 0 or 1)
+                return true
+            end
+        }))
+        return true
+    end
 end
