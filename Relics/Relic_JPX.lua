@@ -6,7 +6,7 @@ SMODS.Atlas{
     py = 95
 }
 
-Holo.Relic_Joker{ -- La+ Darkness
+Holo.Relic_Joker{ -- La+ Darknesss
     member = "Laplus",
     key = "Relic_Laplus",
     loc_txt = {
@@ -28,10 +28,11 @@ Holo.Relic_Joker{ -- La+ Darkness
         if x_unlock then
             info_queue[#info_queue+1] = G.P_CENTERS.c_planet_x
         end
+        local local_x = localize({key='c_planet_x', set='Planet', type='name_text'})
         return {
             vars = {
                 card.ability.extra.retriggers,
-                x_unlock and "Planet X" or '?????',
+                x_unlock and local_x or '?????',
                 colours= {x_unlock and G.C.SECONDARY_SET.Planet or G.C.UI.TEXT_DARK}
             }
         }
@@ -44,10 +45,12 @@ Holo.Relic_Joker{ -- La+ Darkness
     calculate = function(self, card, context)
         holo_card_upgrade_by_consumeable(card, context, 'c_planet_x')
         if context.repetition and context.cardarea==G.play then
-            return{
-                repetitions = card.ability.extra.retriggers,
-                colour=Holo.C.Laplus
-            }
+            if context.other_card:get_id()==10 then
+                return{
+                    repetitions = card.ability.extra.retriggers,
+                    colour=Holo.C.Laplus
+                }
+            end
         end
     end
 }
@@ -128,6 +131,7 @@ SMODS.Atlas{ -- Hakui Koyori: Potion Sprites
     py = 95
 }
 local Koyori_Potion = SMODS.Sticker:extend{
+    member = "Koyori",
     atlas="hololive_Sticker_Potions",
     hide_badge=true,
     should_apply = function(self, card, center, area, bypass_roll)
@@ -139,7 +143,7 @@ local Koyori_Potion = SMODS.Sticker:extend{
         return ((area==G.hand)or bypass_roll)and(card and card.playing_card and card:get_id()==10)
     end,
     calculate = function(self, card, context)
-        if context.before then
+        if context.before and context.cardarea==G.play then
             if self.key == 'hololive_potion_cyan' then
                 card.ability.has_given_chips=false
             elseif self.key == 'hololive_potion_green' then
@@ -158,7 +162,7 @@ local Koyori_Potion = SMODS.Sticker:extend{
                 card.potion_trigger=true
                 return{repetitions=2,colour=HEX('e97896')}
             end
-        elseif context.individual and context.cardarea==G.play then
+        elseif context.main_scoring and context.cardarea==G.play then
             if self.key == 'hololive_potion_red' then
                 card.potion_trigger=true
                 return{mult=10,colour=G.C.RED}
@@ -167,12 +171,11 @@ local Koyori_Potion = SMODS.Sticker:extend{
                 card.potion_trigger=true
                 return{chips=54,colour=G.C.CHIPS}
             end
-        elseif context.after then
+        elseif context.after and context.cardarea==G.play then
             if self.key == 'hololive_potion_green' then
                 G.GAME.probabilities.normal = G.GAME.probabilities.normal / 5.4
             end
             card.potion_trigger=false
-        elseif context.end_of_round then
             local pc = self.key
             G.E_MANAGER:add_event(Event({
                 func = function()
@@ -199,7 +202,7 @@ Koyori_Potion{ -- Hakui Koyori: Cyan Flask
     loc_txt={
         name='Cyan flask',
         text={
-            '{C:chips}+54{} mult',
+            '{C:chips}+54{} chips',
             'when played.'
         }
     },
@@ -315,18 +318,20 @@ Holo.Relic_Joker{ -- Hakui Koyori
             for _,v in ipairs(context.full_hand)do
                 if v.potion_trigger then -- Green, Gold, Blue
                     holo_card_upgrade(card)
+                    v.potion_trigger=false
                 end
             end
         elseif (context.individual or context.repetition) and context.cardarea==G.play then
             if context.other_card.potion_trigger then -- Red, Cyan, Pink
                 holo_card_upgrade(card)
-            end--[[
+                context.other_card.potion_trigger=false
+            end
         elseif context.end_of_round and context.cardarea==G.jokers then
             for _,v in ipairs(G.playing_cards)do
                 for _,pc in ipairs({'red','cyan','pink','green','gold','blue'})do
                     v:remove_sticker('hololive_potion_'..pc)
                 end
-            end]]
+            end
         elseif context.joker_main then
             return{
                 Xmult = cae.Xmult,
@@ -353,8 +358,11 @@ Holo.Relic_Joker{ -- Sakamata Chloe
     config = { extra = {
         Xmult=5, Xmult_mod=0.5,
         odds=5,
+        upgrade_args = {
+            scale_var = 'Xmult',
+        },
         count_args = {
-            dowm = 5, init = 5
+            down = 5, init = 5
         }
     }},
     loc_vars = function(self, info_queue, card)
@@ -386,7 +394,7 @@ Holo.Relic_Joker{ -- Sakamata Chloe
         elseif context.discard then
             if context.other_card:get_id()~=10 then
                 if Holo.chance('Chloe', cae.odds) then
-                    return{remove=true,message='Baku!'}
+                    return{remove=true,message='Baku!',colour=Holo.C.Chloe}
                 end
             end
         elseif context.joker_main then
@@ -403,7 +411,7 @@ Holo.Relic_Joker{ -- Kazama Iroha
         text = {
             'Played cards with ranks {C:attention}other than 10',
             'have {C:green}#5# in #6#{} chance to get {C:red}slashed{} after scoring.',
-            'Create a {C:dark_edition}Negative {C:tarot}Star{} every {C:attention}#4# {C:inactive}[#3#]{} discards.',
+            'Create a {C:dark_edition}Negative {C:tarot}Star{} every {C:attention}#4# {C:inactive}[#3#]{} played hand.',
             'Gain {X:mult,C:white}X#2#{} mult per played hand with no card',
             'needed to be slashed. {C:inactive}(Currently {X:mult,C:white}X#1#{C:inactive} Mult)'
         }
@@ -412,8 +420,11 @@ Holo.Relic_Joker{ -- Kazama Iroha
     config = { extra = {
         Xmult=5, Xmult_mod=0.5,
         odds=5,
+        upgrade_args = {
+            scale_var = 'Xmult',
+        },
         count_args = {
-            dowm = 5, init = 5
+            down = 5, init = 5
         }
     }},
     loc_vars = function(self, info_queue, card)
@@ -436,20 +447,20 @@ Holo.Relic_Joker{ -- Kazama Iroha
     calculate = function(self, card, context)
         local cae = card.ability.extra
         if context.before then
-            if Holo.series_and(context.full_hand, function(v)return(v:get_id()==10)end)then
+            if Holo.series_and(context.scoring_hand, function(v)return(v:get_id()==10)end)then
                 holo_card_upgrade(card)
             end
             if holo_card_counting(card, context) then
                 SMODS.add_card({ key = 'c_star', area = G.consumeables, edition = 'e_negative' })
             end
-        elseif context.destroy_card then
-            if context.other_card:get_id()~=10 then
-                if Holo.chance('Chloe', cae.odds) then
-                    return{remove=true,message='Sha-kin!'}
+        elseif context.destroy_card and context.cardarea == G.play then
+            if context.destroy_card:get_id()~=10 then
+                if Holo.chance('Iroha', cae.odds) then
+                    return{remove=true,message='Sha-kin!',colour=Holo.C.Iroha}
                 end
             end
         elseif context.joker_main then
-            return{Xmult=cae.Xmult,colour=Holo.C.Chloe}
+            return{Xmult=cae.Xmult,colour=Holo.C.Iroha}
         end
     end
 }
