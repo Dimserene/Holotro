@@ -166,7 +166,7 @@ local Koyori_Potion = SMODS.Sticker:extend{
                 return false
             end
         end
-        return ((area==G.hand)or bypass_roll)and(card and card.playing_card and card:get_id()==10)
+        return ((area==G.hand)or bypass_roll)and(card and card.playing_card)
     end,
     calculate = function(self, card, context)
         local pt_cfg = self.potion_config
@@ -196,7 +196,7 @@ local Koyori_Potion = SMODS.Sticker:extend{
                 card.potion_trigger=true
                 return{chips=pt_cfg.cyan}
             end
-        elseif context.discarding_played_card or context.remove_playing_cards then
+        elseif context.destroy_card then
             if self.key == 'hololive_potion_green' and card.chemical_chance then
                 G.GAME.probabilities.normal = G.GAME.probabilities.normal / pt_cfg.green
                 card.chemical_chance=nil
