@@ -156,7 +156,8 @@ local function RelicGacha()
                 Hack = 0,
             },
             enhans = {
-                m_base = 0,
+                c_base = 0,
+                m_any = 0,
                 m_bonus = 0,
                 m_mult = 0,
                 m_wild = 0,
@@ -213,15 +214,13 @@ local function RelicGacha()
             end
 
             -- Enhancements
-            local not_enhanced = true
             for enhan,counter in pairs(card_stats.enhans) do
-                if enhan ~= 'm_base' and SMODS.has_enhancement(c,enhan)then
+                if SMODS.has_enhancement(c,enhan)and enhan~='m_any' then
                     card_stats.enhans[enhan] = counter + 1
-                    not_enhanced = false
+                    if enhan~='c_base'then
+                        card_stats.enhans.m_any = card_stats.enhans.m_any + 1
+                    end
                 end
-            end
-            if not_enhanced then
-                card_stats.enhans.m_base = card_stats.enhans.m_base + 1
             end
 
             -- Editions
@@ -256,8 +255,8 @@ local function RelicGacha()
             Even = card_stats.ranks.Even*2.5 >= deck_size,
             Hack = card_stats.ranks.Hack*3 >= deck_size,
 
-            Enhanceless = card_stats.enhans.m_base >= deck_size*0.5,
-            Enhanced = card_stats.enhans.m_base <= deck_size*0.8,
+            Enhanceless = card_stats.enhans.c_base >= deck_size*0.5,
+            Enhanced = card_stats.enhans.m_any >= deck_size*0.2,
             Bonus = card_stats.enhans.m_bonus >= 2,
             Mult  = card_stats.enhans.m_mult  >= 2,
             Wild  = card_stats.enhans.m_wild  >= 5,
@@ -289,11 +288,11 @@ local function RelicGacha()
             Sora     = deck_stat.Diamonds,
             Roboco   = deck_stat.Diamonds or deck_stat.Steel,
             Suisei   = deck_stat.Diamonds or c_usage.c_star,
-            Mel      = false, -- deck_stat.Enhanced,
-            Fubuki   = false, -- deck_stat.Enhanceless or c_usage.c_fool,
-            Matsuri  = false, -- deck_stat.Hearts or deck_stat.Enhanceless
-            Aki      = false, -- deck_stat.Enhanceless
-            Haato    = false, -- deck_stat.Hearts or c_usage.c_sun,
+            Mel      = deck_stat.Enhanced,
+            Fubuki   = deck_stat.Enhanceless or c_usage.c_fool,
+            Matsuri  = deck_stat.Hearts or deck_stat.Enhanceless,
+            Aki      = deck_stat.Enhanceless,
+            Haato    = deck_stat.Hearts or c_usage.c_sun,
             Miko     = deck_stat.Diamonds or c_usage.c_star,
             Aqua     = hand_usage['High Card'],
             Shion    = deck_stat.Lucky or deck_stat.Ace,
@@ -301,9 +300,9 @@ local function RelicGacha()
             Choco    = deck_stat.Ace,
             Subaru   = true,
             AZKi     = deck_stat.Diamonds,
-            Mio      = false, -- c_usage_total.tarot,
-            Okayu    = false,
-            Korone   = false,
+            Mio      = c_usage_total.tarot,
+            Okayu    = true,
+            Korone   = true,
             -- JP34, ID1, JP5.
             Pekora   = deck_stat.Gold,
             Rushia   = true,
@@ -319,8 +318,8 @@ local function RelicGacha()
             Moona    = deck_stat.Clubs or c_usage.c_moon,
             Iofi     = deck_stat.Clubs,
             Lamy     = false, -- deck_stat.Wild or c_usage.c_lovers,
-            Nene     = false, -- deck_stat.Wild or c_usage.c_lovers,
-            Botan    = false, -- deck_stat.Wild or c_usage.c_lovers,
+            Nene     = false, -- deck_stat.Wild,
+            Botan    = false, -- deck_stat.Wild,
             Aloe     = false, -- deck_stat.Wild,
             Polka    = false, -- deck_stat.Wild or c_usage.c_lovers,
             -- EN1, ID2, EN2, JPX, ID3.
@@ -361,11 +360,11 @@ local function RelicGacha()
             Gigi     = deck_stat.Glass,
             Ceci     = deck_stat.Glass,
             Raora    = deck_stat.Glass,
-            Riona    = false,
+            Riona    = false, -- deck_stat.Editioned
             Niko     = false, -- deck_stat.Editioned and deck_stat.Face
             Suu      = false, -- c_usage.c_aura
             Chihaya  = false, -- c_usage.c_wheel_of_fortune
-            Vivi     = false,
+            Vivi     = false, -- deck_stat.Editioned
         }
         for member,condition in pairs(syn_table)do
             if condition and dupe_check(member) then _pool[#_pool+1] = member end
@@ -398,9 +397,9 @@ local function RelicGacha()
         -- Temporary Solution --
         local implemented_gens = {
             'gen_origin',
-            --'gen_first',
+            'gen_first',
             'gen_exodia',
-            --'gen_gamers'
+            'gen_gamers',
             'gen_fantasy',
             --'gen_force',
             'gen_area15',
@@ -503,7 +502,7 @@ Holo.Relic_Gacha{ -- ID -- Indonesia
             }
         }
     end,
-    memberlist = Holo.Branches.JP.members,
+    memberlist = Holo.Branches.ID.members,
 
     atlas = 'RelicGacha_HQ',
     pos      = {x=2,y=0},
